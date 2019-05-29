@@ -25,7 +25,6 @@ import           Data.ByteString.Builder
 import qualified Data.ByteString.Lazy as BL
 import           Data.Foldable
 import           Data.Hashable
-import           Data.Monoid
 import           Data.Proxy
 import           Data.String
 import           Data.Type.Bool
@@ -207,7 +206,7 @@ array_ vs =
 -- * JSON
 
 newtype PgJSON a = PgJSON a
-  deriving ( Show, Eq, Ord, Hashable, Monoid )
+  deriving ( Show, Eq, Ord, Hashable, Semigroup, Monoid )
 
 instance (Typeable x, FromJSON x) => Pg.FromField (PgJSON x) where
   fromField field d =
@@ -224,7 +223,7 @@ instance ToJSON a => HasSqlValueSyntax PgValueSyntax (PgJSON a) where
     emit "'" <> escapeString (BL.toStrict (encode a)) <> emit "'::json"
 
 newtype PgJSONB a = PgJSONB a
-  deriving ( Show, Eq, Ord, Hashable, Monoid )
+  deriving ( Show, Eq, Ord, Hashable, Semigroup, Monoid )
 
 instance (Typeable x, FromJSON x) => Pg.FromField (PgJSONB x) where
   fromField field d =

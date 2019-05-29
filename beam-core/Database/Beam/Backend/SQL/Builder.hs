@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
-{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE PolyKinds, CPP #-}
 
 -- | Provides a syntax 'SqlSyntaxBuilder' that uses a
 --   'Data.ByteString.Builder.Builder' to construct SQL expressions as strings.
@@ -31,7 +31,11 @@ import           Data.Text (Text)
 import           Data.Coerce
 import           Data.Int
 import           Data.Hashable
-import           Data.Monoid
+
+#if !(MIN_VERSION_base(4,8,0))
+import Data.Monoid
+#endif
+
 import           Data.String
 
 -- | The main syntax. A wrapper over 'Builder'
@@ -51,10 +55,12 @@ instance Show SqlSyntaxBuilder where
 instance Eq SqlSyntaxBuilder where
   a == b = toLazyByteString (buildSql a) == toLazyByteString (buildSql b)
 
+instance Semigroup SqlSyntaxBuilder where
+  (SqlSyntaxBuilder a) <> (SqlSyntaxBuilder b) =
+    SqlSyntaxBuilder (a <> b)
+
 instance Monoid SqlSyntaxBuilder where
   mempty = SqlSyntaxBuilder mempty
-  mappend (SqlSyntaxBuilder a) (SqlSyntaxBuilder b) =
-    SqlSyntaxBuilder (mappend a b)
 
 instance IsSql92SelectSyntax SqlSyntaxBuilder where
   type Sql92SelectSelectTableSyntax SqlSyntaxBuilder = SqlSyntaxBuilder

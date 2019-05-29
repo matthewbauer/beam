@@ -103,10 +103,10 @@ import           Data.ByteString.Builder (Builder, byteString, char8, toLazyByte
 import           Data.ByteString.Lazy (toStrict)
 import qualified Data.ByteString.Lazy as BL
 import           Data.Coerce
+import           Data.Functor.Classes
 import           Data.Hashable
 import           Data.Int
 import           Data.Maybe
-import           Data.Monoid
 import           Data.Scientific (Scientific)
 import           Data.String (IsString(..), fromString)
 import qualified Data.Text as T
@@ -135,17 +135,20 @@ data PgSyntaxF f where
 deriving instance Functor PgSyntaxF
 
 instance Eq f => Eq (PgSyntaxF f) where
-  EmitByteString b1 next1 == EmitByteString b2 next2 =
-      b1 == b2 && next1 == next2
-  EmitBuilder b1 next1 == EmitBuilder b2 next2 =
-      toLazyByteString b1 == toLazyByteString b2 && next1 == next2
-  EscapeString b1 next1 == EscapeString b2 next2 =
-      b1 == b2 && next1 == next2
-  EscapeBytea b1 next1 == EscapeBytea b2 next2 =
-      b1 == b2 && next1 == next2
-  EscapeIdentifier b1 next1 == EscapeIdentifier b2 next2 =
-      b1 == b2 && next1 == next2
-  _ == _ = False
+  (==) = eq1
+
+instance Eq1 PgSyntaxF where
+  liftEq eq (EmitByteString b1 next1) (EmitByteString b2 next2) =
+      b1 == b2 && next1 `eq` next2
+  liftEq eq (EmitBuilder b1 next1) (EmitBuilder b2 next2) =
+      toLazyByteString b1 == toLazyByteString b2 && next1 `eq` next2
+  liftEq eq (EscapeString b1 next1) (EscapeString b2 next2) =
+      b1 == b2 && next1 `eq` next2
+  liftEq eq (EscapeBytea b1 next1) (EscapeBytea b2 next2) =
+      b1 == b2 && next1 `eq` next2
+  liftEq eq (EscapeIdentifier b1 next1) (EscapeIdentifier b2 next2) =
+      b1 == b2 && next1 `eq` next2
+  liftEq _ _ _ = False
 
 instance Hashable PgSyntax where
   hashWithSalt salt (PgSyntax s) = runF s finish step salt
@@ -161,9 +164,11 @@ type PgSyntaxM = F PgSyntaxF
 newtype PgSyntax
   = PgSyntax { buildPgSyntax :: PgSyntaxM () }
 
+instance Semigroup PgSyntax where
+  a <> b = PgSyntax (buildPgSyntax a >> buildPgSyntax b)
+
 instance Monoid PgSyntax where
   mempty = PgSyntax (pure ())
-  mappend a b = PgSyntax (buildPgSyntax a >> buildPgSyntax b)
 
 instance Eq PgSyntax where
   PgSyntax x == PgSyntax y = (fromF x :: Free PgSyntaxF ()) == fromF y
@@ -455,6 +460,9 @@ instance IsCustomSqlSyntax PgExpressionSyntax where
   renderSyntax = PgCustomExpressionSyntax . pgParens . fromPgExpression
 instance IsString (CustomSqlSyntax PgExpressionSyntax) where
   fromString = PgCustomExpressionSyntax . emit . fromString
+
+instance Semigroup (CustomSqlSyntax PgExpressionSyntax) where
+  (<>) = mappend
 
 instance IsSql92QuantifierSyntax PgComparisonQuantifierSyntax where
   quantifyOverAll = PgComparisonQuantifierSyntax (emit "ALL")

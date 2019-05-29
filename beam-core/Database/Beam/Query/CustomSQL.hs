@@ -47,7 +47,7 @@ class (Monoid (CustomSqlSyntax syntax), IsString (CustomSqlSyntax syntax)) =>
 
 instance IsCustomSqlSyntax SqlSyntaxBuilder where
   newtype CustomSqlSyntax SqlSyntaxBuilder = SqlSyntaxBuilderCustom ByteString
-    deriving (IsString, Monoid)
+    deriving (IsString, Semigroup, Monoid)
 
   customExprSyntax (SqlSyntaxBuilderCustom bs) = SqlSyntaxBuilder (byteString bs)
   renderSyntax = SqlSyntaxBuilderCustom . toStrict . toLazyByteString . buildSql

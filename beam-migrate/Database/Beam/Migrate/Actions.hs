@@ -108,9 +108,8 @@ instance NFData cmd => NFData (PotentialAction cmd) where
                              rnf actionEnglish `seq`
                              rnf actionScore `seq` ()
 
-instance Monoid (PotentialAction cmd) where
-  mempty = PotentialAction mempty mempty mempty  "" 0
-  mappend a b =
+instance Semigroup (PotentialAction cmd) where
+  a <> b =
     PotentialAction (actionPreConditions a <> actionPreConditions b)
                     (actionPostConditions a <> actionPostConditions b)
                     (actionCommands a <> actionCommands b)
@@ -118,6 +117,9 @@ instance Monoid (PotentialAction cmd) where
                       else if T.null (actionEnglish b) then actionEnglish a
                            else actionEnglish a <> "; " <> actionEnglish b)
                     (actionScore a + actionScore b)
+
+instance Monoid (PotentialAction cmd) where
+  mempty = PotentialAction mempty mempty mempty  "" 0
 
 type ActionProviderFn cmd =
      (forall preCondition.  Typeable preCondition  => [ preCondition ])             {- The list of preconditions -}
@@ -323,7 +325,7 @@ solvedState :: HS.HashSet SomeDatabasePredicate -> DatabaseState cmd -> Bool
 --  | trace ("Solved state " ++ show (HS.size post, HS.size pre)) False = undefined
 solvedState goal (DatabaseState _ cur _) = goal == cur
 --  all (`HM.member` curs) post
-  --post `HS.isSubsetOf` 
+  --post `HS.isSubsetOf`
   --HS.null post && HS.null pre
 --solvedState _ = False
 
@@ -334,7 +336,7 @@ defaultActionProviders = [ createTableActionProvider
 
                          , addColumnProvider
                          , dropColumnProvider
-  
+
                          , addColumnNullProvider
                          , dropColumnNullProvider ]
 

@@ -94,12 +94,14 @@ data SqlConstraintAttributesBuilder
   , _sqlConstraintAttributeDeferrable :: Maybe Bool }
   deriving (Show, Eq)
 
-instance Monoid SqlConstraintAttributesBuilder where
-  mempty = SqlConstraintAttributesBuilder Nothing Nothing
-  mappend a b =
+instance Semigroup SqlConstraintAttributesBuilder where
+  a <> b =
     SqlConstraintAttributesBuilder
       (_sqlConstraintAttributeTiming b <|> _sqlConstraintAttributeTiming a)
       (_sqlConstraintAttributeDeferrable b <|> _sqlConstraintAttributeDeferrable a)
+
+instance Monoid SqlConstraintAttributesBuilder where
+  mempty = SqlConstraintAttributesBuilder Nothing Nothing
 
 fromSqlConstraintAttributes :: SqlConstraintAttributesBuilder -> Builder
 fromSqlConstraintAttributes (SqlConstraintAttributesBuilder timing deferrable) =

@@ -9,6 +9,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+{-# OPTIONS_GHC -fno-warn-deprecations #-}
+
 module Database.Beam.Postgres.Connection
   ( Pg.Connection
   , Pg.ResultError(..), Pg.SqlError(..)
@@ -75,7 +77,6 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as C
 import           Data.Maybe
-import           Data.Monoid
 import           Data.Proxy
 import           Data.String
 
@@ -193,7 +194,7 @@ runQueryReturning conn x = do
                  case parsedRow of
                    Left err -> liftIO (bailEarly row ("Could not read row: " <> show err))
                    Right parsedRow' ->
-                     do C.yieldOr parsedRow' (liftIO bailAfterParse)
+                     do C.yield parsedRow'
                         streamResults (Just fields')
             Pg.TuplesOk -> liftIO (Pg.withConnection conn finishQuery)
             Pg.EmptyQuery -> fail "No query"
@@ -205,8 +206,6 @@ runQueryReturning conn x = do
       Pg.unsafeFreeResult row
       cancelQuery
       fail errorString
-
-    bailAfterParse = cancelQuery
 
     cancelQuery =
       Pg.withConnection conn $ \conn' -> do

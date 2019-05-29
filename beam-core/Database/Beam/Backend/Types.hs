@@ -44,7 +44,7 @@ class BeamBackend be where
 --   value. This isn't currently enforced at the type-level, but may be in
 --   future versions of beam.
 newtype Auto x = Auto { unAuto :: Maybe x }
-  deriving (Show, Read, Eq, Ord, Generic, Monoid)
+  deriving (Show, Read, Eq, Ord, Generic, Semigroup, Monoid)
 instance Json.FromJSON a => Json.FromJSON (Auto a) where
   parseJSON a = Auto <$> Json.parseJSON a
 instance Json.ToJSON a => Json.ToJSON (Auto a) where

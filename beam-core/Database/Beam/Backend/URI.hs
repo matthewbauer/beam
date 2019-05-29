@@ -27,10 +27,12 @@ data BeamURIOpener c where
 newtype BeamURIOpeners c where
   BeamURIOpeners :: M.Map String (BeamURIOpener c) -> BeamURIOpeners c
 
+instance Semigroup (BeamURIOpeners c) where
+  (BeamURIOpeners a) <> (BeamURIOpeners b) =
+    BeamURIOpeners (a <> b)
+
 instance Monoid (BeamURIOpeners c) where
   mempty = BeamURIOpeners mempty
-  mappend (BeamURIOpeners a) (BeamURIOpeners b) =
-    BeamURIOpeners (mappend a b)
 
 mkUriOpener :: MonadBeam syntax be hdl m
             => String -> (forall a. URI -> (hdl -> IO a) -> IO a)
